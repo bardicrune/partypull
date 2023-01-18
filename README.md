@@ -3,6 +3,7 @@ This Addon for Ashita-v4 is designed to send a message to the party when you pul
 
 ## FFXI commands:
 /pull - Checks the targeted entity and sends a message to the party including entity level, difficulty rating, and defense/evasion ratings.
+
 /pull cmd [type] [ability/spell] - Set the command executed when pulling.
 * [type] - ra, ma, or ja
 * [ability/spell] - Place multi-word spells or abilities in double-quotes
@@ -10,6 +11,7 @@ This Addon for Ashita-v4 is designed to send a message to the party when you pul
 * Ex. - /pull cmd ma "Bio II"
 * Ex. - /pull cmd ja provoke
 /pull call \<n\> - Set the call number inserted into the party chat string. Set to 0 to disable.
+
 /pull help - Displays this help message.
 
 ## Future Development
