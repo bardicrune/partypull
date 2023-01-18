@@ -9,10 +9,11 @@ This Addon for Ashita-v4 is designed to send a message to the party when you pul
 * * Ex. - /pull cmd ra
 * * Ex. - /pull cmd ma "Bio II"
 * * Ex. - /pull cmd ja provoke
-* /pull call \<n\> - Set the call number inserted into the party chat string. Set to 00 to disable.
+* /pull call \<n\> - Set the call number inserted into the party chat string. Set to 99 to disable.
 * /pull help - Displays this help message.
 
 ## Future Development
 * Check that \<t\> is a mob before attempting the check to get information.  Currently it runs a /check no matter what and will check players or give an error if no target is selected.
 * Check that the spell/ability is valid for the player before saving command to be executed.
 * Possibly add job level settings for different commands per job.
+* Add support for scall and ncall types
