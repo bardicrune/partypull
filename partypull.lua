@@ -57,11 +57,11 @@ local function print_help(isError)
 	end
 	
 	local cmds = T{
-		{ '/pull', 'Do the party msg and pull.' };
+		{ '/pull', 'Send the party message and pull.' };
 		{ '/pull help', 'Displays the addons help information.' },
 		--Future Improvement ideas
-		--{ '/partypull cmd /ra <t>', 'Set the command executed when pulling.' };
-		--{ '/partypull call <n>', 'Set the call number inserted into the party chat string. Set to 0 to disable.' };
+		--{ '/pull cmd /ra <t>', 'Set the command executed when pulling.' };
+		--{ '/pull setcall <n>', 'Set the call number inserted into the party chat string. Set to 0 to disable.' };
 	};
 	
 	-- Print the command list.
