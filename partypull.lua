@@ -100,8 +100,6 @@ ashita.events.register('command', 'command_cb', function (e)
 	-- Set flag for check called by this routine
 	partypull_check = 'yes'
 	
-	-- Check if target is a mob
-	AshitaCore:GetTargetID()
 	-- Perform check of target
 	AshitaCore:GetChatManager():QueueCommand(1, '/c <t>');
 	return;
