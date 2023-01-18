@@ -91,10 +91,11 @@ local function print_help(isError)
 	local cmds = T{
 		{ '/pull', 'Send the party message and pull.' },
 		{ '/pull cmd [type] [ability/spell]', 'Set the command executed when pulling.'},
-		{ '[type]', 'Can be ra, ma, or ja'},
-		{ '[ability/spell]', 'Place multi-word spells or abilities in double-quotes'},
+		{ '[type]', 'Can be ra, ma, ja, disable, or custom'},
+		{ '[ability/spell]', 'Place multi-word spells, abilities or custom commands in double-quotes'},
 		{ 'Ex.', '/pull cmd ma \"Bio II\"' },
 		{ 'Ex.', '/pull cmd ja Provoke' },
+		{ 'Ex.', '/pull cmd custom \"/exec macro.txt\"' },
 		{ '/pull call <#>', 'Set the call number inserted into the party chat string. Set to 99 to disable.' },
 		{ '/pull callprefix <s,n,c>', 'Set the call type to scall, ncall, or call' },
 		{ '/pull help', 'Displays this help information.' },
@@ -111,7 +112,9 @@ local function do_partypull()
 	AshitaCore:GetChatManager():QueueCommand(1, pstr);
 
 	--Perform pulling action
-	AshitaCore:GetChatManager():QueueCommand(1, partypull.settings.user.pull_str);
+	if (partypull.settings.user.pull_str ~= 'disable') then
+		AshitaCore:GetChatManager():QueueCommand(1, partypull.settings.user.pull_str);
+	end
 end
 
 ashita.events.register('command', 'command_cb', function (e)
@@ -139,6 +142,12 @@ ashita.events.register('command', 'command_cb', function (e)
 			return;
 		end
 		print(chat.header(addon.name):append('Old pull command: '):append(tostring(partypull.settings.user.pull_str)));
+		if (args[3]:any('disable')) then
+			partypull.settings.user.pull_str = 'disable'
+		end
+		if (args[3]:any('custom')) then
+			partypull.settings.user.pull_str = args[4]
+		end
 		if (args[3]:any('ra')) then
 			partypull.settings.user.pull_str = '/ra <t>'
 		end
