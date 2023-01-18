@@ -90,7 +90,6 @@ local function print_help(isError)
 	
 	local cmds = T{
 		{ '/pull', 'Send the party message and pull.' },
-		{ '/pull help', 'Displays this help information.' },
 		{ '/pull cmd [type] [ability/spell]', 'Set the command executed when pulling.'},
 		{ '[type]', 'Can be ra, ma, or ja'},
 		{ '[ability/spell]', 'Place multi-word spells or abilities in double-quotes'},
@@ -98,6 +97,7 @@ local function print_help(isError)
 		{ 'Ex.', '/pull cmd ja Provoke' },
 		{ '/pull call <#>', 'Set the call number inserted into the party chat string. Set to 99 to disable.' },
 		{ '/pull callprefix <s,n,c>', 'Set the call type to scall, ncall, or call' },
+		{ '/pull help', 'Displays this help information.' },
 	};
 	
 	-- Print the command list.
