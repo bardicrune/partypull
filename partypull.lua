@@ -22,7 +22,8 @@ end
 local default_settings = T{
     user = T{
         pull_str = '/ra <t>',
-		pcallnmb = 00,
+		pcallnmb = 99,
+		callprefix = 'c',
     },
 };
 
@@ -51,9 +52,7 @@ local partypull = T{
     },
     widescan = T{ },
 	msg = T{ },
-	user = T{
-		callprefix = nil,
-	},
+	user = T{ },
 	settings = settings.load(default_settings),
 };
 
@@ -93,11 +92,12 @@ local function print_help(isError)
 		{ '/pull', 'Send the party message and pull.' },
 		{ '/pull help', 'Displays this help information.' },
 		{ '/pull cmd [type] [ability/spell]', 'Set the command executed when pulling.'},
-		{ '[type]', 'ra, ma, or ja'},
+		{ '[type]', 'Can be ra, ma, or ja'},
 		{ '[ability/spell]', 'Place multi-word spells or abilities in double-quotes'},
 		{ 'Ex.', '/pull cmd ma \"Bio II\"' },
 		{ 'Ex.', '/pull cmd ja Provoke' },
-		{ '/pull call <n>', 'Set the call number inserted into the party chat string. Set to 00 to disable.' },
+		{ '/pull call <#>', 'Set the call number inserted into the party chat string. Set to 99 to disable.' },
+		{ '/pull callprefix <s,n,c>', 'Set the call type to scall, ncall, or call' },
 	};
 	
 	-- Print the command list.
@@ -144,7 +144,22 @@ ashita.events.register('command', 'command_cb', function (e)
 		end
 		if (args[3]:any('ma')) then
 			if (args[4] ~= nil) then
-				partypull.settings.user.pull_str = '/ma \"' + args[4] + '\" <t>'
+				local spell = AshitaCore:GetResourceManager():GetSpellByName(args[4], 0)
+				--print(chat.header(addon.name):append(tostring(spell)));
+				if (spell == nil) then
+					print(chat.header(addon.name):append(chat.error('Spell ' .. args[4] .. ' is not valid.  Check your spelling.')));
+					return;
+				end
+				local spellindex = spell.Index
+				--print(chat.header(addon.name):append(tostring(spellindex)));
+				local hasspell = AshitaCore:GetMemoryManager():GetPlayer():HasSpell(spellindex)
+				--print(chat.header(addon.name):append(tostring(hasspell)));
+				if (hasspell == true) then
+					partypull.settings.user.pull_str = '/ma \"' + args[4] + '\" <t>'
+				else
+					print(chat.header(addon.name):append(chat.error('Player does not have access to spell.')));
+					return;
+				end
 			else
 				print(chat.header(addon.name):append(chat.error('Spell name must be provided.')));
 				return;
@@ -152,7 +167,22 @@ ashita.events.register('command', 'command_cb', function (e)
 		end
 		if (args[3]:any('ja')) then
 			if (args[4] ~= nil) then
-				partypull.settings.user.pull_str = '/ja \"' + args[4] + '\" <t>'
+				local ability = AshitaCore:GetResourceManager():GetAbilityByName(args[4], 0)
+				--print(chat.header(addon.name):append(tostring(ability)));
+				if (ability == nil) then
+					print(chat.header(addon.name):append(chat.error('Ability ' .. args[4] .. ' is not valid.  Check your spelling.')));
+					return;
+				end
+				local abilityid = ability.Id
+				--print(chat.header(addon.name):append(tostring(abilityid)));
+				local hasability = AshitaCore:GetMemoryManager():GetPlayer():HasAbility(abilityid)
+				--print(chat.header(addon.name):append(tostring(hasability)));
+				if (hasability == true) then
+					partypull.settings.user.pull_str = '/ja \"' + args[4] + '\" <t>'
+				else
+					print(chat.header(addon.name):append(chat.error('Player does not have access to ability.')));
+					return;
+				end
 			else
 				print(chat.header(addon.name):append(chat.error('Ability name must be provided.')));
 				return;
@@ -173,17 +203,30 @@ ashita.events.register('command', 'command_cb', function (e)
 		return;
 	end
 	
+	if (#args == 3 and args[2]:any('callprefix')) then
+		if (args[3] == 'c' or args[3] == 's' or args[3] == 'n') then
+			partypull.settings.user.callprefix = args[3]
+			update_settings();
+		else
+			print(chat.header(addon.name):append(tostring('Value must be s, n, or c')));
+		end
+		return;
+	end
 	if (#args == 1) then
 		-- Clear previous msg
 		partypull.msg:clear();
 	
-		-- Set flag for check called by this routine
-		partypull_check = 'yes'
-	
 		-- Check if target is a mob
-		--AshitaCore:GetTargetID()
-		-- Perform check of target
-		AshitaCore:GetChatManager():QueueCommand(1, '/c <t>');
+		local TI = AshitaCore:GetMemoryManager():GetTarget():GetTargetIndex(0)
+		--print(chat.header(addon.name):append(tostring(TI)));
+		if (TI <= 1024 and TI > 0) then
+			-- Set flag for check called by this routine
+			partypull_check = 'yes'
+			--print(chat.header(addon.name):append(tostring('IsMonster')));
+			-- Perform check of target
+			AshitaCore:GetChatManager():QueueCommand(1, '/c <t>');
+		end
+
 	end
 	return;
 end);
@@ -234,8 +277,15 @@ ashita.events.register('packet_in', 'packet_in_cb', function (e)
             end
         end
 		
-		-- Create party chat string from check
-		partypull.msg:append(tostring('/p Pulling -'));
+		-- Create chat string from check
+		-- Check for party membership
+		local partychk = AshitaCore:GetMemoryManager():GetParty():GetMemberIsActive(1)
+		--print(chat.header(addon.name):append(tostring(partychk)));
+		if (partychk == 0) then
+			partypull.msg:append(tostring('/echo Pulling -'));
+		else
+			partypull.msg:append(tostring('/p Pulling -'));
+		end
 		partypull.msg:append(chat.message(entity.Name));
 		partypull.msg:append(chat.color1(82, string.char(0x81, 0xA8)));
 		partypull.msg:append(chat.headerp('Lv. ' .. chat.color1(82, p1 > 0 and tostring(p1) or '???')));
@@ -247,8 +297,14 @@ ashita.events.register('packet_in', 'packet_in_cb', function (e)
 			partypull.msg:append(#c > 0 and c:enclose('\30\81(', '\30\81)\30\01') or c);
 		end
 		--Add audible alert to party chat
-		if (partypull.settings.user.pcallnmb ~= 00 ) then
-			partypull.msg:append(tostring('<call' .. partypull.settings.user.pcallnmb .. '>'));
+		local calltype = 'call'
+		if (partypull.settings.user.callprefix == 's') then
+			calltype = 'scall'
+		elseif (partypull.settings.user.callprefix == 'n') then
+			calltype = 'ncall'
+		end
+		if (partypull.settings.user.pcallnmb ~= '99') then
+			partypull.msg:append(tostring('<' .. calltype .. partypull.settings.user.pcallnmb .. '>'));
 		end
 		
 		--Set string to global variable
