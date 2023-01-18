@@ -9,6 +9,7 @@ This Addon for Ashita-v4 is designed to send a message to the party when you pul
 * * Ex. - /pull cmd ra
 * * Ex. - /pull cmd ma "Bio II"
 * * Ex. - /pull cmd ja provoke
+* * Ex. - /pull cmd custom "/exec macro.txt"
 * /pull call \<#\> - Set the call number inserted into the party chat string. Set to 99 to disable.
 * /pull callprefix \<s,n,c\> - Set the call type to scall, ncall, or call
 * /pull help - Displays this help message.
