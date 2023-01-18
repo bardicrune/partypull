@@ -1,3 +1,24 @@
+--[[
+* Addons - Copyright (c) 2021 Ashita Development Team
+* Contact: https://www.ashitaxi.com/
+* Contact: https://discord.gg/Ashita
+*
+* This file is part of Ashita.
+*
+* Ashita is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* Ashita is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with Ashita.  If not, see <https://www.gnu.org/licenses/>.
+--]]
+
 addon.name      = 'partypull';
 addon.author    = 'bardicrune';
 addon.version   = '1.0';
@@ -6,6 +27,7 @@ addon.link      = 'https://ashitaxi.com/';
 
 require('common');
 local chat = require('chat');
+local settings = require('settings');
 
 --[[
 * Returns the string wrapped in a colored parenthesis.
@@ -16,6 +38,14 @@ local chat = require('chat');
 chat.headerp = function (str)
     return ('\30\81(%s\30\81)\30\01'):fmt(str);
 end
+
+-- Default Settings
+local default_settings = T{
+    user = T{
+        pull_str = '/ra <t>',
+		pcallnmb = 0,
+    },
+};
 
 -- PartyPull Variables
 local partypull = T{
@@ -41,12 +71,36 @@ local partypull = T{
         [0x47] = chat.color1(76,'incredibly tough'),
     },
     widescan = T{ },
-    msg = T{ },
+	msg = T{ },
+	user = T{
+		callprefix = nil,
+	},
+	settings = settings.load(default_settings),
 };
 
+--[[
+* Updates the addon settings.
+*
+* @param {table} s - The new settings table to use for the addon settings. (Optional.)
+--]]
+local function update_settings(s)
+    -- Update the settings table..
+    if (s ~= nil) then
+        partypull.settings = s;
+    end
+
+    -- Save the current settings..
+    settings.save();
+end
+
+--[[
+* Registers a callback for the settings to monitor for character switches.
+--]]
+settings.register('settings', 'settings_update', update_settings);
+
 partypull_check = 'no'
-local pcallnmb = 0
-local pull_str = '/ra <t>'
+--local pcallnmb = 0
+--local pull_str = '/ra <t>'
 
 local function print_help(isError)
 	-- Print the help header.
@@ -57,11 +111,14 @@ local function print_help(isError)
 	end
 	
 	local cmds = T{
-		{ '/pull', 'Send the party message and pull.' };
-		{ '/pull help', 'Displays the addons help information.' },
-		--Future Improvement ideas
-		--{ '/pull cmd /ra <t>', 'Set the command executed when pulling.' };
-		--{ '/pull setcall <n>', 'Set the call number inserted into the party chat string. Set to 0 to disable.' };
+		{ '/pull', 'Send the party message and pull.' },
+		{ '/pull help', 'Displays this help information.' },
+		{ '/pull cmd [type] [ability/spell]', 'Set the command executed when pulling.'},
+		{ '[type]', 'ra, ma, or ja'},
+		{ '[ability/spell]', 'Place multi-word spells or abilities in double-quotes'},
+		{ 'Ex.', '/pull cmd ma \"Bio II\"' },
+		{ 'Ex.', '/pull cmd ja Provoke' },
+		{ '/pull call <n>', 'Set the call number inserted into the party chat string. Set to 0 to disable.' },
 	};
 	
 	-- Print the command list.
@@ -75,13 +132,16 @@ local function do_partypull()
 	AshitaCore:GetChatManager():QueueCommand(1, pstr);
 
 	--Perform pulling action
-	AshitaCore:GetChatManager():QueueCommand(1, pull_str);
+	AshitaCore:GetChatManager():QueueCommand(1, partypull.settings.user.pull_str);
 end
 
 ashita.events.register('command', 'command_cb', function (e)
     -- Parse the command arguments..
     local args = e.command:args();
-    if (#args == 0 or args[1] ~= '/pull') then
+	if (#args == 0) then
+		return;
+	end
+	if (args[1] ~= '/pull' and args[1] ~= '/partypull' and args[1] ~= '/pp') then
         return;
     end
 
@@ -94,14 +154,58 @@ ashita.events.register('command', 'command_cb', function (e)
         return;
     end
 	
-	-- Clear previous msg
-	partypull.msg:clear();
+	if (#args > 1 and args[2]:any('cmd')) then
+		if (#args == 2) then
+			print(chat.header(addon.name):append(chat.error('Type must be provided.')));
+			return;
+		end
+		print(chat.header(addon.name):append('Old pull command: '):append(tostring(partypull.settings.user.pull_str)));
+		if (args[3]:any('ra')) then
+			partypull.settings.user.pull_str = '/ra <t>'
+		end
+		if (args[3]:any('ma')) then
+			if (args[4] ~= nil) then
+				partypull.settings.user.pull_str = '/ma \"' + args[4] + '\" <t>'
+			else
+				print(chat.header(addon.name):append(chat.error('Spell name must be provided.')));
+				return;
+			end
+		end
+		if (args[3]:any('ja')) then
+			if (args[4] ~= nil) then
+				partypull.settings.user.pull_str = '/ja \"' + args[4] + '\" <t>'
+			else
+				print(chat.header(addon.name):append(chat.error('Ability name must be provided.')));
+				return;
+			end
+		end
+		update_settings();
+		print(chat.header(addon.name):append('New pull command: '):append(tostring(partypull.settings.user.pull_str)));
+		return;
+	end
 	
-	-- Set flag for check called by this routine
-	partypull_check = 'yes'
+	if (#args == 3 and args[2]:any('call')) then
+		if tonumber(args[3]) then
+			partypull.settings.user.pcallnmb = args[3]
+			update_settings();
+		else
+			print(chat.header(addon.name):append('Value must be numeric.'));
+		end
+		return;
+	end
 	
-	-- Perform check of target
-	AshitaCore:GetChatManager():QueueCommand(1, '/c <t>');
+	if (#args == 1) then
+		-- Clear previous msg
+		partypull.msg:clear();
+	
+		-- Set flag for check called by this routine
+		partypull_check = 'yes'
+	
+		-- Check if target is a mob
+		--AshitaCore:GetTargetID()
+		-- Perform check of target
+		AshitaCore:GetChatManager():QueueCommand(1, '/c <t>');
+	end
 	return;
 end);
 
@@ -164,8 +268,8 @@ ashita.events.register('packet_in', 'packet_in_cb', function (e)
 			partypull.msg:append(#c > 0 and c:enclose('\30\81(', '\30\81)\30\01') or c);
 		end
 		--Add audible alert to party chat
-		if (pcallnmb ~= 0 ) then
-			partypull.msg:append(tostring('<call' .. pcallnmb .. '>'));
+		if (partypull.settings.user.pcallnmb ~= 0 ) then
+			partypull.msg:append(tostring('<call' .. partypull.settings.user.pcallnmb .. '>'));
 		end
 		
 		--Set string to global variable
