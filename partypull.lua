@@ -22,7 +22,7 @@ end
 local default_settings = T{
     user = T{
         pull_str = '/ra <t>',
-		pcallnmb = 0,
+		pcallnmb = 00,
     },
 };
 
@@ -97,7 +97,7 @@ local function print_help(isError)
 		{ '[ability/spell]', 'Place multi-word spells or abilities in double-quotes'},
 		{ 'Ex.', '/pull cmd ma \"Bio II\"' },
 		{ 'Ex.', '/pull cmd ja Provoke' },
-		{ '/pull call <n>', 'Set the call number inserted into the party chat string. Set to 0 to disable.' },
+		{ '/pull call <n>', 'Set the call number inserted into the party chat string. Set to 00 to disable.' },
 	};
 	
 	-- Print the command list.
@@ -247,7 +247,7 @@ ashita.events.register('packet_in', 'packet_in_cb', function (e)
 			partypull.msg:append(#c > 0 and c:enclose('\30\81(', '\30\81)\30\01') or c);
 		end
 		--Add audible alert to party chat
-		if (partypull.settings.user.pcallnmb ~= 0 ) then
+		if (partypull.settings.user.pcallnmb ~= 00 ) then
 			partypull.msg:append(tostring('<call' .. partypull.settings.user.pcallnmb .. '>'));
 		end
 		
