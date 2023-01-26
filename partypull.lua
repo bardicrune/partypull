@@ -108,13 +108,17 @@ local function print_help(isError)
 end
 
 local function do_partypull()
-	-- Inform party of action
-	AshitaCore:GetChatManager():QueueCommand(1, pstr);
-
 	--Perform pulling action
 	if (partypull.settings.user.pull_str ~= 'disable') then
+		--print(chat.header(addon.name):append(tostring('before pull cmd')));
 		AshitaCore:GetChatManager():QueueCommand(1, partypull.settings.user.pull_str);
 	end
+	
+	coroutine.sleep(0.1);
+	
+	-- Inform party of action
+	--print(chat.header(addon.name):append(tostring('before pchat msg')));
+	AshitaCore:GetChatManager():QueueCommand(1, pstr);
 end
 
 ashita.events.register('command', 'command_cb', function (e)
