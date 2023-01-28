@@ -16,4 +16,4 @@ This Addon for Ashita-v4 is designed to send a message to the party when you pul
 
 ## Future Development
 * Possibly add job level settings for different commands per job.
-* Possibly add config gui (imgui) for simpler configuation.
+* Possibly add config gui (imgui) for simpler configuration.
