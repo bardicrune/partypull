@@ -2,7 +2,7 @@ addon.name      = 'partypull';
 addon.author    = 'bardicrune';
 addon.version   = '1.0';
 addon.desc      = 'Informs party with advanced info about the target when pulling';
-addon.link      = 'https://ashitaxi.com/';
+addon.link      = 'https://github.com/bardicrune/partypull';
 
 require('common');
 local chat = require('chat');
