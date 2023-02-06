@@ -1,8 +1,8 @@
 addon.name      = 'partypull';
 addon.author    = 'bardicrune';
-addon.version   = '1.0';
+addon.version   = '1.0.1';
 addon.desc      = 'Informs party with advanced info about the target when pulling';
-addon.link      = 'https://github.com/bardicrune/partypull';
+addon.link      = 'https://ashitaxi.com/';
 
 require('common');
 local chat = require('chat');
@@ -28,6 +28,8 @@ local default_settings = T{
 };
 
 -- PartyPull Variables
+local partypull_check = 'no'
+local pstr = ' '
 local partypull = T{
     conditions = T{
         [0xAA] = chat.message('High Evasion, High Defense'),
@@ -75,10 +77,6 @@ end
 * Registers a callback for the settings to monitor for character switches.
 --]]
 settings.register('settings', 'settings_update', update_settings);
-
-partypull_check = 'no'
---local pcallnmb = 0
---local pull_str = '/ra <t>'
 
 local function print_help(isError)
 	-- Print the help header.
@@ -320,7 +318,7 @@ ashita.events.register('packet_in', 'packet_in_cb', function (e)
 			partypull.msg:append(tostring('<' .. calltype .. partypull.settings.user.pcallnmb .. '>'));
 		end
 		
-		--Set string to global variable
+		--Set partypull.msg to variable defined in main
 		pstr = (partypull.msg:concat(' '))
 
         -- Mark the packet as handled..
