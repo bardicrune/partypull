@@ -1,4 +1,4 @@
-addon.name      = 'partypull';
+addon.name      = 'PartyPull';
 addon.author    = 'bardicrune';
 addon.version   = '1.1.0';
 addon.desc      = 'Informs party with advanced info about the target when pulling';
@@ -83,6 +83,7 @@ local function print_help(isError)
 	if (isError) then
 		print(chat.header(addon.name):append(chat.error('Invalid command syntax for command: ')):append(chat.success('/' .. addon.name)));
 	else
+		print(chat.header(addon.name):append(chat.message('Note: ')):append(chat.color1(6, 'Disable \'checker\' addon to prevent multiple messages during a /check')));
 		print(chat.header(addon.name):append(chat.message('Available commands:')));
 	end
 	
@@ -288,7 +289,7 @@ ashita.events.register('packet_in', 'packet_in_cb', function (e)
 		-- Create chat string from check
 		-- Build basic chat check message if not called by /pull
 		if (partypull_check == 'no') then
-			partypull.msg:append(chat.header('PartyPull') - 1);
+			partypull.msg:append(chat.header(addon.name) - 1);
 		else
 			-- Check for party membership
 			local partychk = AshitaCore:GetMemoryManager():GetParty():GetMemberIsActive(1)
@@ -318,7 +319,7 @@ ashita.events.register('packet_in', 'packet_in_cb', function (e)
 		elseif (partypull.settings.user.callprefix == 'n') then
 			calltype = 'ncall'
 		end
-		if (partypull.settings.user.pcallnmb ~= '99' and partypull_check == 'yes') then
+		if (partypull.settings.user.pcallnmb ~= '99' and partypull_check == 'yes' and partychk == 0) then
 			partypull.msg:append(tostring('<' .. calltype .. partypull.settings.user.pcallnmb .. '>'));
 		end
 		
