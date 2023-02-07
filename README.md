@@ -14,6 +14,9 @@ This Addon for Ashita-v4 is designed to send a message to the party when you pul
 * /pull callprefix \<s,n,c\> - Set the call type to scall, ncall, or call
 * /pull help - Displays this help message.
 
+## Note:
+* Disable the 'checker' addon to prevent unwanted and additional /check messages.
+
 ## Future Development
 * Possibly add job level settings for different commands per job.
 * Possibly add config gui (imgui) for simpler configuration.
