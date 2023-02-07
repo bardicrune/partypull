@@ -1,6 +1,6 @@
 addon.name      = 'partypull';
 addon.author    = 'bardicrune';
-addon.version   = '1.0.1';
+addon.version   = '1.1.0';
 addon.desc      = 'Informs party with advanced info about the target when pulling';
 addon.link      = 'https://github.com/bardicrune/partypull';
 
@@ -117,6 +117,7 @@ local function do_partypull()
 	-- Inform party of action
 	--print(chat.header(addon.name):append(tostring('before pchat msg')));
 	AshitaCore:GetChatManager():QueueCommand(1, pstr);
+	return;
 end
 
 ashita.events.register('command', 'command_cb', function (e)
@@ -224,9 +225,6 @@ ashita.events.register('command', 'command_cb', function (e)
 		return;
 	end
 	if (#args == 1) then
-		-- Clear previous msg
-		partypull.msg:clear();
-	
 		-- Check if target is a mob
 		local TI = AshitaCore:GetMemoryManager():GetTarget():GetTargetIndex(0)
 		--print(chat.header(addon.name):append(tostring(TI)));
@@ -271,11 +269,6 @@ ashita.events.register('packet_in', 'packet_in_cb', function (e)
             return;
         end
 
-		-- Do nothing if not called by /pull
-		if (partypull_check == 'no') then
-			return;
-		end
-
         -- Obtain the string form of the conditions and type..
         local c = partypull.conditions[m];
         local t = partypull.types[p2];
@@ -287,16 +280,27 @@ ashita.events.register('packet_in', 'packet_in_cb', function (e)
                 p1 = lvl;
             end
         end
-		
+
+		-- Clear previous msg
+		partypull.msg:clear();
+		pstr = ' '
+
 		-- Create chat string from check
-		-- Check for party membership
-		local partychk = AshitaCore:GetMemoryManager():GetParty():GetMemberIsActive(1)
-		--print(chat.header(addon.name):append(tostring(partychk)));
-		if (partychk == 0) then
-			partypull.msg:append(tostring('/echo Pulling -'));
+		-- Build basic chat check message if not called by /pull
+		if (partypull_check == 'no') then
+			partypull.msg:append(chat.header('PartyPull') - 1);
 		else
-			partypull.msg:append(tostring('/p Pulling -'));
+			-- Check for party membership
+			local partychk = AshitaCore:GetMemoryManager():GetParty():GetMemberIsActive(1)
+			--print(chat.header(addon.name):append(tostring(partychk)));
+			if (partychk == 0) then
+				partypull.msg:append(tostring('/echo Pulling -'));
+			else
+				partypull.msg:append(tostring('/p Pulling -'));
+			end
 		end
+
+		
 		partypull.msg:append(chat.message(entity.Name));
 		partypull.msg:append(chat.color1(82, string.char(0x81, 0xA8)));
 		partypull.msg:append(chat.headerp('Lv. ' .. chat.color1(82, p1 > 0 and tostring(p1) or '???')));
@@ -314,20 +318,23 @@ ashita.events.register('packet_in', 'packet_in_cb', function (e)
 		elseif (partypull.settings.user.callprefix == 'n') then
 			calltype = 'ncall'
 		end
-		if (partypull.settings.user.pcallnmb ~= '99') then
+		if (partypull.settings.user.pcallnmb ~= '99' and partypull_check == 'yes') then
 			partypull.msg:append(tostring('<' .. calltype .. partypull.settings.user.pcallnmb .. '>'));
 		end
 		
-		--Set partypull.msg to variable defined in main
+		-- Set partypull.msg to variable defined in main
 		pstr = (partypull.msg:concat(' '))
 
         -- Mark the packet as handled..
         e.blocked = true;
 
-		do_partypull();
-
-		-- Unset partypull_check flag
-		partypull_check = 'no'
+		if (partypull_check == 'no') then
+			print(pstr);
+		else
+			do_partypull();
+			-- Unset partypull_check flag
+			partypull_check = 'no'
+		end
 	end
 	
     -- Packet: Widescan Results
