@@ -1,6 +1,6 @@
 addon.name      = 'PartyPull';
 addon.author    = 'bardicrune';
-addon.version   = '1.2.0';
+addon.version   = '2.0.0';
 addon.desc      = 'Informs party with advanced info about the target when pulling';
 addon.link      = 'https://github.com/bardicrune/partypull';
 
@@ -24,6 +24,30 @@ local default_settings = T{
         pull_str = '/ra <t>',
 		pcallnmb = 99,
 		callprefix = 'c',
+		jobcmd = T{
+			WAR = ' ',
+			MNK = ' ',
+			WHM = ' ',
+			BLM = ' ',
+			RDM = ' ',
+			THF = ' ',
+			PLD = ' ',
+			DRK = ' ',
+			BST = ' ',
+			BRD = ' ',
+			RNG = ' ',
+			SMN = ' ',
+			SAM = ' ',
+			NIN = ' ',
+			DRG = ' ',
+			BLU = ' ',
+			COR = ' ',
+			PUP = ' ',
+			DNC = ' ',
+			SCH = ' ',
+			GEO = ' ',
+			RUN = ' ',
+		},
     },
 };
 
@@ -89,12 +113,12 @@ local function print_help(isError)
 	
 	local cmds = T{
 		{ '/pull', 'Send the party message and pull.' },
-		{ '/pull cmd [type] [ability/spell]', 'Set the command executed when pulling.'},
-		{ '[type]', 'Can be ra, ma, ja, disable, or custom'},
-		{ '[ability/spell]', 'Place multi-word spells, abilities or custom commands in double-quotes'},
-		{ 'Ex.', '/pull cmd ma \"Bio II\"' },
-		{ 'Ex.', '/pull cmd ja Provoke' },
-		{ 'Ex.', '/pull cmd custom \"/exec macro.txt\"' },
+		{ '/pull cmd [type] [ability/spell]', 'Set the command to be executed for the current job when pulling.'},
+		{ '    [type]', 'Can be ra, ma, ja, disable, or custom'},
+		{ '    [ability/spell]', 'Place multi-word spells, abilities or custom commands in double-quotes'},
+		{ '  Ex.', '/pull cmd ma \"Bio II\"' },
+		{ '  Ex.', '/pull cmd ja Provoke' },
+		{ '  Ex.', '/pull cmd custom \"/exec macro.txt\"' },
 		{ '/pull call <#>', 'Set the call number inserted into the party chat string. Set to 99 to disable.' },
 		{ '/pull callprefix <s,n,c>', 'Set the call type to scall, ncall, or call' },
 		{ '/pull help', 'Displays this help information.' },
@@ -107,12 +131,21 @@ local function print_help(isError)
 end
 
 local function do_partypull()
+	local mainjobid = AshitaCore:GetMemoryManager():GetPlayer():GetMainJob();
+	local MainJob = AshitaCore:GetResourceManager():GetString("jobs.names_abbr", mainjobid);
+	--print (chat.header(addon.name):append(tostring(MainJob)));
 	--Perform pulling action
-	if (partypull.settings.user.pull_str ~= 'disable') then
-		--print(chat.header(addon.name):append(tostring('before pull cmd')));
-		AshitaCore:GetChatManager():QueueCommand(1, partypull.settings.user.pull_str);
+	if (partypull.settings.user.jobcmd[MainJob] ~= ' ' ) then
+		if (partypull.settings.user.jobcmd[MainJob] ~= 'disable') then
+			--print(chat.header(addon.name):append(tostring('before pull cmd')));
+			AshitaCore:GetChatManager():QueueCommand(1, partypull.settings.user.jobcmd[MainJob]);
+		end
+	else
+		if (partypull.settings.user.pull_str ~= 'disable') then
+			--print(chat.header(addon.name):append(tostring('before pull cmd')));
+			AshitaCore:GetChatManager():QueueCommand(1, partypull.settings.user.pull_str);
+		end
 	end
-	
 	coroutine.sleep(0.1);
 	
 	-- Inform party of action
@@ -145,15 +178,24 @@ ashita.events.register('command', 'command_cb', function (e)
 			print(chat.header(addon.name):append(chat.error('Type must be provided.')));
 			return;
 		end
-		print(chat.header(addon.name):append('Old pull command: '):append(tostring(partypull.settings.user.pull_str)));
+		local mainjobid = AshitaCore:GetMemoryManager():GetPlayer():GetMainJob();
+		local MainJob = AshitaCore:GetResourceManager():GetString("jobs.names_abbr", mainjobid);
+		if (partypull.settings.user.jobcmd[MainJob] ~= ' ' ) then
+			print(chat.header(addon.name):append('Old pull command: '):append(tostring(partypull.settings.user.jobcmd[MainJob])));
+		else
+			print(chat.header(addon.name):append('Old pull command: '):append(tostring(partypull.settings.user.pull_str)));
+		end
+		if (args[3]:any('show')) then
+			return;
+		end
 		if (args[3]:any('disable')) then
-			partypull.settings.user.pull_str = 'disable'
+			partypull.settings.user.jobcmd[MainJob] = 'disable'
 		end
 		if (args[3]:any('custom')) then
-			partypull.settings.user.pull_str = args[4]
+			partypull.settings.user.jobcmd[MainJob] = args[4]
 		end
 		if (args[3]:any('ra')) then
-			partypull.settings.user.pull_str = '/ra <t>'
+			partypull.settings.user.jobcmd[MainJob] = '/ra <t>'
 		end
 		if (args[3]:any('ma')) then
 			if (args[4] ~= nil) then
@@ -168,7 +210,7 @@ ashita.events.register('command', 'command_cb', function (e)
 				local hasspell = AshitaCore:GetMemoryManager():GetPlayer():HasSpell(spellindex)
 				--print(chat.header(addon.name):append(tostring(hasspell)));
 				if (hasspell == true) then
-					partypull.settings.user.pull_str = '/ma \"' + args[4] + '\" <t>'
+					partypull.settings.user.jobcmd[MainJob] = '/ma \"' + args[4] + '\" <t>'
 				else
 					print(chat.header(addon.name):append(chat.error('Player does not have access to spell.')));
 					return;
@@ -191,7 +233,7 @@ ashita.events.register('command', 'command_cb', function (e)
 				local hasability = AshitaCore:GetMemoryManager():GetPlayer():HasAbility(abilityid)
 				--print(chat.header(addon.name):append(tostring(hasability)));
 				if (hasability == true) then
-					partypull.settings.user.pull_str = '/ja \"' + args[4] + '\" <t>'
+					partypull.settings.user.jobcmd[MainJob] = '/ja \"' + args[4] + '\" <t>'
 				else
 					print(chat.header(addon.name):append(chat.error('Player does not have access to ability.')));
 					return;
@@ -202,7 +244,7 @@ ashita.events.register('command', 'command_cb', function (e)
 			end
 		end
 		update_settings();
-		print(chat.header(addon.name):append('New pull command: '):append(tostring(partypull.settings.user.pull_str)));
+		print(chat.header(addon.name):append('New pull command: '):append(tostring(partypull.settings.user.jobcmd[MainJob])));
 		return;
 	end
 	
