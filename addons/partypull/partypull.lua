@@ -1,6 +1,6 @@
 addon.name      = 'PartyPull';
 addon.author    = 'bardicrune';
-addon.version   = '1.1.0';
+addon.version   = '1.2.0';
 addon.desc      = 'Informs party with advanced info about the target when pulling';
 addon.link      = 'https://github.com/bardicrune/partypull';
 
@@ -228,8 +228,9 @@ ashita.events.register('command', 'command_cb', function (e)
 	if (#args == 1) then
 		-- Check if target is a mob
 		local TI = AshitaCore:GetMemoryManager():GetTarget():GetTargetIndex(0)
-		--print(chat.header(addon.name):append(tostring(TI)));
-		if (TI <= 1024 and TI > 0) then
+		--print(chat.header(addon.name):append(TI));
+		--better logic to detect if mob vs other entity (detects dynamic index mobs)
+		if (bit.band(AshitaCore:GetMemoryManager():GetEntity():GetSpawnFlags(TI), 0x10) ~= 0) then
 			-- Set flag for check called by this routine
 			partypull_check = 'yes'
 			--print(chat.header(addon.name):append(tostring('IsMonster')));
